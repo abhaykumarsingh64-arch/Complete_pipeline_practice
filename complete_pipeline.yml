@@ -87,7 +87,7 @@ stages:
   jobs:
   - job: Manual_approval
     pool: server
-    condition: succeeded()
+    condition: and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     displayName: Manual Validation
     steps:
     - task: ManualValidation@1
@@ -115,5 +115,5 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'apply'
-        workingDirectory: '$(System.DefaultWorkingDirectory)Environment/Parent_module'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
         environmentServiceNameAzureRM: 'mk-app-reg'
