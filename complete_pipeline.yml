@@ -25,7 +25,7 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'validate'
-        workingDirectory: '$(System.DefaultWorkingDirectory)Environment/Parent_module'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
    
 - stage: 
   displayName: Terrafrom Scan
