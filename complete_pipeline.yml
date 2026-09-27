@@ -4,21 +4,12 @@ trigger:
 - feauture/*
 
 stages:
+
 - stage:
   displayName: Init & Validate
   jobs:
   - job:
     steps:
-    - task: TerraformTask@5
-      displayName: Init
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
-        backendServiceArm: 'mk-app-reg'
-        backendAzureRmStorageAccountName: 'dreampipelinestg'
-        backendAzureRmContainerName: 'dreampipelinecontainer'
-        backendAzureRmKey: 'prod.tfsate'
     - powershell: |
         Write-Host "Terraform version:"
         terraform version
@@ -29,6 +20,16 @@ stages:
         Write-Host "PATH:"
         $env:PATH
       displayName: "Check Terraform on Agent"
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
     
     - task: TerraformTask@5
       displayName: Terraform Validate
