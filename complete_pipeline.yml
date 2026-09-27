@@ -97,7 +97,7 @@ stages:
 
   - job:
     condition: and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-    displayName: Manual Validation
+    displayName: Apply_stage
     steps:
     - task: TerraformTask@5
       displayName: Init
