@@ -1,0 +1,40 @@
+pool: Abhayagentpool
+trigger:
+- main
+- feauture/*
+
+stages:
+- stage:
+  displayName: Init & Validate
+  jobs:
+  - job:
+    steps:
+    - task: TerraformTask@5
+      displayName: Init & Validate
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
+    
+    - task: TerraformTask@5
+      displayName: Terraform Validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)Environment/Parent_module'
+   
+- stage: 
+  displayName: Terrafrom Scan
+  jobs:
+  - job: 
+    steps:
+    - task: AzurePowerShell@5
+      inputs:
+        ScriptType: 'InlineScript'
+        Inline: 'tflint /recursive'
+
+    
