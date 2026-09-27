@@ -5,10 +5,10 @@ trigger:
 
 stages:
 
-- stage:
+- stage: Initand_Validate
   displayName: Init & Validate
   jobs:
-  - job:
+  - job: InitandValidate
     steps:
     - task: TerraformTask@5
       displayName: Init
@@ -28,10 +28,11 @@ stages:
         command: 'validate'
         workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
    
-- stage: 
+- stage: Scanning_stage
   displayName: Terrafrom Scan
   jobs:
   - job: Tflint
+    condition: succeeded()
     displayName: Tflint
     steps:
     - task: PowerShell@2
@@ -39,4 +40,80 @@ stages:
         targetType: 'inline'
         script: 'tflint --recursive --force'
 
+  - job: checkov
+    displayName: Checkov
+    steps:
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: 'checkov -d . --framework terraform --soft-fail'
+
+  - job: Trivy
+    displayName: Trivy
+    steps:
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: 'trivy config .'
     
+- stage: Plan_stage
+  displayName: Terraform Plan
+  jobs:
+  - job: Plan_stage
+    condition: succeeded()
+    displayName: Terraform Plan
+    steps:
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
+
+    - task: TerraformTask@5
+      displayName: Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        environmentServiceNameAzureRM: 'mk-app-reg'
+
+- stage: Apply_stage
+  displayName: Terraform Apply
+  jobs:
+  - job: Manual_approval
+    pool: server
+    condition: succeeded()
+    displayName: Manual Validation
+    steps:
+    - task: ManualValidation@1
+      displayName: manual validation
+      inputs:
+        notifyUsers: 'abc@xyz.com'
+
+  - job:
+    condition: and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    displayName: Manual Validation
+    steps:
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
+      
+    - task: TerraformTask@5
+      displayName: Apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)Environment/Parent_module'
+        environmentServiceNameAzureRM: 'mk-app-reg'
