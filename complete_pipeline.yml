@@ -10,16 +10,6 @@ stages:
   jobs:
   - job:
     steps:
-    - powershell: |
-        Write-Host "Terraform version:"
-        terraform version
-
-        Write-Host "Terraform location:"
-        where.exe terraform
-
-        Write-Host "PATH:"
-        $env:PATH
-      displayName: "Check Terraform on Agent"
     - task: TerraformTask@5
       displayName: Init
       inputs:
@@ -41,11 +31,12 @@ stages:
 - stage: 
   displayName: Terrafrom Scan
   jobs:
-  - job: 
+  - job: Tflint
+    displayName: Tflint
     steps:
     - task: AzurePowerShell@5
       inputs:
         ScriptType: 'InlineScript'
-        Inline: 'tflint /recursive'
+        Inline: 'tflint --recursive'
 
     
