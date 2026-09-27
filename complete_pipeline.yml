@@ -1,7 +1,7 @@
 pool: Abhayagentpool
 trigger:
 - main
-- feauture/*
+- feature/*
 
 stages:
 
