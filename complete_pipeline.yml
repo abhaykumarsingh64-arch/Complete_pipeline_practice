@@ -19,6 +19,16 @@ stages:
         backendAzureRmStorageAccountName: 'dreampipelinestg'
         backendAzureRmContainerName: 'dreampipelinecontainer'
         backendAzureRmKey: 'prod.tfsate'
+    - powershell: |
+        Write-Host "Terraform version:"
+        terraform version
+
+        Write-Host "Terraform location:"
+        where.exe terraform
+
+        Write-Host "PATH:"
+        $env:PATH
+      displayName: "Check Terraform on Agent"
     
     - task: TerraformTask@5
       displayName: Terraform Validate
