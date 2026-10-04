@@ -1,7 +1,9 @@
 pool: Abhayagentpool
+
 trigger:
 - main
 - feature/*
+
 parameters:
 - name: Tflint
   displayName: Tflint
@@ -24,16 +26,6 @@ stages:
   - job: Tflint
     condition: ${{ parameters.Tflint }}
     steps:
-    - task: TerraformTask@5
-      displayName: Init
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
-        backendServiceArm: 'mk-app-reg'
-        backendAzureRmStorageAccountName: 'dreampipelinestg'
-        backendAzureRmContainerName: 'dreampipelinecontainer'
-        backendAzureRmKey: 'prod.tfsate'
     - task: PowerShell@2
       displayName: Tflint
       inputs:
@@ -47,16 +39,6 @@ stages:
   - job: 
     condition: ${{ parameters.checkov }}
     steps:
-    - task: TerraformTask@5
-      displayName: Init
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
-        backendServiceArm: 'mk-app-reg'
-        backendAzureRmStorageAccountName: 'dreampipelinestg'
-        backendAzureRmContainerName: 'dreampipelinecontainer'
-        backendAzureRmKey: 'prod.tfsate'
     - task: PowerShell@2
       displayName: Checkov
       inputs:
@@ -70,16 +52,6 @@ stages:
   - job: Trivy
     condition: ${{ parameters.Trivy }}
     steps:
-    - task: TerraformTask@5
-      displayName: Init
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
-        backendServiceArm: 'mk-app-reg'
-        backendAzureRmStorageAccountName: 'dreampipelinestg'
-        backendAzureRmContainerName: 'dreampipelinecontainer'
-        backendAzureRmKey: 'prod.tfsate'
     - task: PowerShell@2
       displayName: Trivy
       inputs:
