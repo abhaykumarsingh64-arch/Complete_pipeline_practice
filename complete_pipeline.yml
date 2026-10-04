@@ -2,13 +2,95 @@ pool: Abhayagentpool
 trigger:
 - main
 - feature/*
+parameters:
+- name: Tflint
+  displayName: Tflint
+  type: boolean
+
+- name: Checkov
+  displayName: Checkov
+  type: boolean  
+
+- name: Trivy
+  displayName: Trivy
+  type: boolean
 
 stages:
-
-- stage: Initand_Validate
-  displayName: Init & Validate
+- stage: TFlintStage
+  displayName: Tflint
+  dependsOn: []
   jobs:
-  - job: InitandValidate
+  - job: Tflint
+    condition: ${{ parameters.Tflint }}
+    steps:
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
+    - task: PowerShell@2
+      displayName: Tflint
+      inputs:
+        targetType: 'inline'
+        script: 'tflint --recursive --force'
+    
+- stage: checkov
+  displayName: checkov
+  dependsOn: []
+  jobs:
+  - job: 
+    condition: ${{ parameters.checkov }}
+    steps:
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
+    - task: PowerShell@2
+      displayName: Checkov
+      inputs:
+        targetType: 'inline'
+        script: 'checkov -d . --framework terraform --soft-fail'
+
+- stage: Trivy
+  displayName: Trivy
+  dependsOn: []
+  jobs:
+  - job: Trivy
+    condition: ${{ parameters.Trivy }}
+    steps:
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
+    - task: PowerShell@2
+      displayName: Trivy
+      inputs:
+        targetType: 'inline'
+        script: 'trivy config .'
+
+- stage: Validate_Stage
+  displayName: Validate Stage
+  dependsOn: []
+  jobs:
+  - job: Validate_Stage
+    condition: succeeded()
     steps:
     - task: TerraformTask@5
       displayName: Init
@@ -22,42 +104,15 @@ stages:
         backendAzureRmKey: 'prod.tfsate'
     
     - task: TerraformTask@5
-      displayName: Terraform Validate
       inputs:
         provider: 'azurerm'
         command: 'validate'
         workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
-   
-- stage: Scanning_stage
-  displayName: Terrafrom Scan
-  jobs:
-  - job: Tflint
-    condition: succeeded()
-    displayName: Tflint
-    steps:
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: 'tflint --recursive --force'
 
-  - job: checkov
-    displayName: Checkov
-    steps:
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: 'checkov -d . --framework terraform --soft-fail'
-
-  - job: Trivy
-    displayName: Trivy
-    steps:
-    - task: PowerShell@2
-      inputs:
-        targetType: 'inline'
-        script: 'trivy config .'
-    
 - stage: Plan_stage
   displayName: Terraform Plan
+  dependsOn:
+  - Validate_Stage
   jobs:
   - job: Plan_stage
     condition: succeeded()
@@ -82,8 +137,8 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
         environmentServiceNameAzureRM: 'mk-app-reg'
 
-- stage: Apply_stage
-  displayName: Terraform Apply
+- stage: Manual_Approval
+  displayName: Manual Approval
   jobs:
   - job: Manual_approval
     pool: server
@@ -94,7 +149,11 @@ stages:
       displayName: manual validation
       inputs:
         notifyUsers: 'abc@xyz.com'
+  
 
+- stage: Apply_stage
+  displayName: Terraform Apply
+  jobs:
   - job:
     condition: and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     displayName: Apply_stage
