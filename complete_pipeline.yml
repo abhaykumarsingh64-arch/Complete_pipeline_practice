@@ -146,6 +146,16 @@ stages:
     condition: and(succeeded(),eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     displayName: Manual Validation
     steps:
+    - task: TerraformTask@5
+      displayName: Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment/Parent_module'
+        backendServiceArm: 'mk-app-reg'
+        backendAzureRmStorageAccountName: 'dreampipelinestg'
+        backendAzureRmContainerName: 'dreampipelinecontainer'
+        backendAzureRmKey: 'prod.tfsate'
     - task: ManualValidation@1
       displayName: manual validation
       inputs:
