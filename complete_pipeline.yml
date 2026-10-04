@@ -6,6 +6,7 @@ parameters:
 - name: Tflint
   displayName: Tflint
   type: boolean
+  
 
 - name: Checkov
   displayName: Checkov
